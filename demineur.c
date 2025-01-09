@@ -2,7 +2,7 @@
 #include <stdio.h>   // printf
 #include "demineur.h"
 #include <time.h>
-
+#include <unistd.h>
 
 
 
@@ -20,7 +20,6 @@ void initialisation(int * t , int grille ){
 void Pmines (int * t, int mines,int grille){
 	int m;
 	int i;
-	t[1]=-1;
 	for (i=0;i<mines;i++){
 		m = rand()%(grille*grille);
 		if (t[m]!=-1){
@@ -29,22 +28,26 @@ void Pmines (int * t, int mines,int grille){
 		else i--;
 	}
 }	
-
+int regarder(int * a, int i,int b){
+	int compteur=0;
+	if ( i%10 != 0 && i>9 && a[i-11]==b )compteur++;	// en haut à gauche
+	if ( i>10 && a[i-10]==b )compteur++;			// en haut 
+	if ( i%10 != 9 && i>9 && a[i-9]==b )compteur++;		// en haut à droite
+	if ( i%10 != 0 && a[i-1]==b )compteur++;		// à gauche 
+	if ( i%10 != 9  && a[i+1]==b )compteur++;		// à droite
+	if ( i%10 != 0 && i<90 && a[i+9]==b )compteur++;	// en bas à gauche 
+	if ( i<90 && a[i+10]==b )compteur++;			// en bas
+	if ( i%10 != 9 && i<90 && a[i+11]==b )compteur++;	// en bas à droite
+	return compteur;
+}
 void calcul (int * t,int grille){
 	int i;
 	for(i=0;i<grille*grille;i++){
 		if (t[i] == -1 );
 		else {	
-			if ( i%10 != 0 && i>9 && t[i-11]==-1 )t[i]=t[i]+1;	// en haut à gauche
-			if ( i>10 && t[i-10]==-1 )t[i]=t[i]+1;			// en haut 
-			if ( i%10 != 9 && i>9 && t[i-9]==-1 )t[i]=t[i]+1;	// en haut à droite
-			if ( i%10 != 0 && t[i-1]==-1 )t[i]=t[i]+1;		// à gauche 
-			if ( i%10 != 9  && t[i+1]==-1 )t[i]=t[i]+1;		// à droite
-			if ( i%10 != 0 && i<90 && t[i+9]==-1 )t[i]=t[i]+1;	// en bas à gauche 
-			if ( i<90 && t[i+10]==-1 )t[i]=t[i]+1;			// en bas
-			if ( i%10 != 9 && i<90 && t[i+11]==-1 )t[i]=t[i]+1;	// en bas à droite
+			t[i]=regarder(t,i,-1);
+			printf(" i : %d , %d la ?\n",i,t[i]);
 		}
-		printf("%d\n",i);
 	}
 }
 
@@ -122,10 +125,58 @@ int gagner(int * t,int * g,int grille, int mines){
 	}
 	return oui ;
 }
+
+
+int IA (int * t,int * g,int grille){
+	int i;
+	int c=-1;
+	for (i=0;i<grille*grille;i++){
+		if (g[i]==1 && t[i]>0){
+			if ((8-regarder(g,i,1)) == t[i]){
+				if ( i%10 != 0 && i>9 && g[i-11]==0 )c = (i-11);	// en haut à gauche
+				if ( i>10 && g[i-10]==0 )c = (i-10);			// en haut 
+				if ( i%10 != 9 && i>9 && g[i-9]==0 )c = (i-9);		// en haut à droite
+				if ( i%10 != 0 && g[i-1]==0 )c = (i-1);			// à gauche 
+				if ( i%10 != 9  && g[i+1]==0 )c = (i+1);		// à droite
+				if ( i%10 != 0 && i<90 && g[i+9]==0 )c = (i+9);		// en bas à gauche 
+				if ( i<90 && g[i+10]==0 )c = (i+10);			// en bas
+				if ( i%10 != 9 && i<90 && g[i+11]==0 )c = (i+11);	// en bas à droite
+				
+				if (c!=-1){
+				printf("iuqgiu  %d %d %d\n",c,i,regarder(g,i,1));
+				placer(g,c);
+				printf( "L'IA met un drapeau sur la case : %d \n",c);
+				return c;
+				}
+			}
+		}	
+	}
+	for (i=0;i<grille*grille;i++){
+		if (g[i]==1 && t[i]>0){
+			if (regarder(g,i,2) == t[i]){
+				if ( i%10 != 0 && i>9 && g[i-11]==0 )c = (i-11);	// en haut à gauche
+				if ( i>10 && g[i-10]==0 )c = (i-10);			// en haut 
+				if ( i%10 != 9 && i>9 && g[i-9]==0 )c = (i-9);		// en haut à droite
+				if ( i%10 != 0 && g[i-1]==0 )c = (i-1);			// à gauche 
+				if ( i%10 != 9  && g[i+1]==0 )c = (i+1);		// à droite
+				if ( i%10 != 0 && i<90 && g[i+9]==0 )c = (i+9);		// en bas à gauche 
+				if ( i<90 && g[i+10]==0 )c = (i+10);			// en bas
+				if ( i%10 != 9 && i<90 && g[i+11]==0 )c = (i+11);	// en bas à droite
+				if (c!=-1){
+				explo(t,g,c);
+				printf( "L'IA découvre la case : %d \n",c);
+				return c;
+				}
+			}
+		}
+	}
+return -1;
+}	 
+
 int main (){
 	srand(time( NULL ) );
 	int grille = 10;
-	int mines = 10;
+	int mines = 20;
 	int t[grille*grille];
 	int g[grille*grille];
 	initialisation(t,grille);
@@ -140,44 +191,30 @@ int main (){
 		int reponse=0;
 		int c=-1;
 		int gagne=0;
-		printf("Que faire :\n 1. Révéler une case. \n 2. Placer un drapeau. \n 3. Retirer un drapeau. \n");
+		printf("Que faire :\n 1. Révéler une case. \n 2. Placer un drapeau. \n 3. Retirer un drapeau. \n 4. IA? \n");
 		scanf("%d",&reponse);
+		if (reponse==4)c = IA(t,g,grille);
+		else {
 		printf("case ?");
 		scanf("%d",&c);
+		}
 		switch (reponse){
-		case 1 : explo(t,g,c);
-		if (t[c]==-1)joue=1;
-		break;
+		case 1 : explo(t,g,c);if (t[c]==-1)joue=1;break;
 		case 2 : placer(g,c);break;
 		case 3 : retirer(g,c);break;
-		case 4 : joue = 3;break;
+		case 4 : break;
+		case 5 : joue = 3;break;
 		}
 		afficherf(t,g,grille);
 		gagne = gagner(t,g,grille,mines);
 		if (gagne==1)joue=2;
+
+		
 	}
 	switch (joue){
 		case 1:printf("\nperdu\n");break;
 		case 2:printf("\ngagné\n");break;
 	}
-	
-void IA (int * t,int * g,int grille){
-	int i;
-	int trouve=0;
-	for (i=0;i<grille*grille;i++){
-		if (g[i]==1 && t[i]>0){
-			int compteur=0;
-			if ( i%10 != 0 && i>9 && g[i-11]==0 )compteur++;	// en haut à gauche
-			if ( i>10 && g[i-10]==0 )compteur++;			// en haut 
-			if ( i%10 != 9 && i>9 && g[i-9]==0 )compteur++;	// en haut à droite
-			if ( i%10 != 0 && g[i-1]==0 )compteur++;		// à gauche 
-			if ( i%10 != 9  && g[i+1]==0 )compteur++;		// à droite
-			if ( i%10 != 0 && i<90 && g[i+9]==0 )compteur++;	// en bas à gauche 
-			if ( i<90 && g[i+10]==0 )compteur++;			// en bas
-			if ( i%10 != 9 && i<90 && g[i+11]==0 )compteur++;	// en bas à droite
-		}	
-	}	
-}	
 
 printf("\n");
 return 0;
